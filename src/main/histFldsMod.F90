@@ -79,6 +79,23 @@ contains
     ! Snow properties
     ! These will be vertically averaged over the snow profile
 
+
+!FG for forecast output
+     call add_fld1d (fname='QFLX_RAIN_GRND', units='mm H2O/s', &
+          avgflag='A', long_name='rain on ground after interception', &
+          ptr_pft=clm3%g%l%c%p%pwf%qflx_rain_grnd)
+ 
+     call add_fld1d (fname='QFLX_SNOW_GRND', units='mm H2O/s', &
+          avgflag='A', long_name='snow on ground after interception', &
+          ptr_pft=clm3%g%l%c%p%pwf%qflx_snow_grnd)
+
+     call add_fld1d (fname='QFLX_EVAP_TOT', units='mm H2O/s', &
+          avgflag='A', long_name='qflx_evap_soi + qflx_evap_veg + qflx_tran_veg', &
+          ptr_pft=clm3%g%l%c%p%pwf%qflx_evap_tot)
+
+
+
+
     call add_fld1d (fname='SNOWDP',  units='m',  &
          avgflag='A', long_name='snow height', &
          ptr_col=clm3%g%l%c%cps%snowdp)
@@ -298,6 +315,12 @@ contains
     call add_fld1d (fname='FPSN', units='umol/m2s',  &
          avgflag='A', long_name='photosynthesis', &
          ptr_pft=clm3%g%l%c%p%pcf%fpsn, set_lake=0._r8)
+
+!MU (25.02.13)
+    call add_fld1d (fname='FPLRES', units='umol/m2s',  &
+         avgflag='A', long_name='plant respiration', &
+         ptr_pft=clm3%g%l%c%p%pcf%fplres, set_lake=0._r8)
+!MU (25.02.13)
 
 #if (defined DUST)
     call add_fld1d (fname='DSTFLXT', units='kg/m2/s',  &

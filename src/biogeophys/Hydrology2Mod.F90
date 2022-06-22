@@ -228,10 +228,10 @@ contains
          vol_liq, icefrac)
 
     call Infiltration(lbc, ubc,  num_soilc, filter_soilc)
-
+#if ! defined COUP_OAS_PFL
     call SoilWater(lbc, ubc, num_soilc, filter_soilc, &
          vol_liq, dwat, hk, dhkdw)
-
+#endif
     call Drainage(lbc, ubc, num_soilc, filter_soilc, &
          vol_liq, hk, icefrac)
 
@@ -342,7 +342,11 @@ contains
        c = filter_nolakec(fc)
        if (snl(c) < 0) t_snow(c) = t_snow(c)/abs(snl(c))
        t_grnd(c) = t_soisno(c,snl(c)+1)
+#if defined COUP_OAS_PFL
+       endwb(c) = h2ocan(c) + h2osno(c) ! CMS we do not consider anymore the unconfined aquifer
+#else
        endwb(c) = h2ocan(c) + h2osno(c) + wa(c)
+#endif
     end do
 
     do j = 1, nlevsoi

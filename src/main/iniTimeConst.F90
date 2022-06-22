@@ -447,6 +447,28 @@ subroutine iniTimeConst
    ! Soil layers and interfaces (assumed same for all non-lake patches)
    ! "0" refers to soil surface and "nlevsoi" refers to the bottom of model soil
 
+#if defined COUP_OAS_PFL
+! Configuration for fixed depth, check root percentage distribution
+    dzsoi(:) = 0.25_r8
+
+! Configuration for variable dz
+   dzsoi(1) = 0.02_r8
+   dzsoi(2) = 0.03_r8
+   dzsoi(3) = 0.05_r8
+   dzsoi(4) = 0.07_r8
+   dzsoi(5) = 0.13_r8
+   dzsoi(6) = 0.20_r8
+   dzsoi(7) = 0.30_r8
+   dzsoi(8) = 0.50_r8
+   dzsoi(9) = 0.70_r8
+   dzsoi(10)= 1.00_r8
+
+   zsoi(1) = 0.5_r8*(dzsoi(1))
+   do j = 2, nlevsoi
+     zsoi(j) = zsoi(j-1) + 0.5_r8*(dzsoi(j-1) + dzsoi(j))
+   end do
+
+#else
    do j = 1, nlevsoi
       zsoi(j) = scalez*(exp(0.5_r8*(j-0.5_r8))-1._r8)    !node depths
    enddo
@@ -456,6 +478,8 @@ subroutine iniTimeConst
       dzsoi(j)= 0.5_r8*(zsoi(j+1)-zsoi(j-1))
    enddo
    dzsoi(nlevsoi) = zsoi(nlevsoi)-zsoi(nlevsoi-1)
+
+#endif
 
    zisoi(0) = 0._r8
    do j = 1, nlevsoi-1
@@ -498,8 +522,11 @@ subroutine iniTimeConst
       smpmin(c) = -1.e8_r8
 
       ! Decay factor (m)
+#if (defined CATCHMENT)
+      hkdepth(c) = 1._r8/0.5_r8  ! CPS Lawrence et al. 2011
+#else
       hkdepth(c) = 1._r8/2.5_r8
-
+#endif
       ! Maximum saturated fraction
       wtfact(c) = gti(g)
 

@@ -352,12 +352,17 @@ contains
 
        if (qflx_evap_soi(p) >= 0._r8) then
           ! for evaporation partitioning between liquid evap and ice sublimation, 
-	  ! use the ratio of liquid to (liquid+ice) in the top layer to determine split
-	  if ((h2osoi_liq(c,j)+h2osoi_ice(c,j)) > 0.) then
-             qflx_evap_grnd(p) = max(qflx_evap_soi(p)*(h2osoi_liq(c,j)/(h2osoi_liq(c,j)+h2osoi_ice(c,j))), 0._r8)
-	  else
-	     qflx_evap_grnd(p) = 0.
-	  end if
+          ! use the ratio of liquid to (liquid+ice) in the top layer to determine split
+          if ((h2osoi_liq(c,j)+h2osoi_ice(c,j)) > 0.) then
+#ifdef COUP_OAS_PFL
+            !CPS take moisture intake by soil into account
+            qflx_evap_grnd(p) = qflx_evap_soi(p)*(h2osoi_liq(c,j)/(h2osoi_liq(c,j)+h2osoi_ice(c,j)))
+#else
+            qflx_evap_grnd(p) = max(qflx_evap_soi(p)*(h2osoi_liq(c,j)/(h2osoi_liq(c,j)+h2osoi_ice(c,j))), 0._r8)
+#endif
+          else
+            qflx_evap_grnd(p) = 0.
+          end if
           qflx_sub_snow(p) = qflx_evap_soi(p) - qflx_evap_grnd(p)
        else
           if (t_grnd(c) < tfrz) then

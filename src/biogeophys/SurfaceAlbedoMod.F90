@@ -531,7 +531,6 @@ contains
                 albsod = alblak(ib)
                 albsoi = albsod
              end if
-
              albgrd(c,ib) = albsod*(1._r8-frac_sno(c)) + albsnd(c,ib)*frac_sno(c)
              albgri(c,ib) = albsoi*(1._r8-frac_sno(c)) + albsni(c,ib)*frac_sno(c)
           end if
