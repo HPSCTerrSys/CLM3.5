@@ -37,6 +37,7 @@ module decompMod
                                  ! columns and pfts for any processor
   public get_proc_global         ! total gridcells, landunits, columns, pfts
                                  ! across all processors
+
   save
 !
 ! !DESCRIPTION:
@@ -103,6 +104,9 @@ module decompMod
      integer,pointer :: gdc2glo(:)    ! 1d gdc to 1d glo
      integer,pointer :: gdc2i(:)      ! 1d gdc to 2d sn i index
      integer,pointer :: gdc2j(:)      ! 1d gdc to 2d sn j index
+!FG  
+     integer,pointer :: glo2owner(:)    ! 1d glo to proc-id
+
   end type decomp_type
   public decomp_type
   type(decomp_type),public,target :: ldecomp
@@ -1512,7 +1516,7 @@ contains
 
     ! Allocate dynamic memory for adecomp, ldecomp derived type
 
-    allocate(adecomp%gdc2gsn(anumg), adecomp%gsn2gdc(anumg), &
+    allocate(adecomp%glo2owner(ani*anj), adecomp%gdc2gsn(anumg), adecomp%gsn2gdc(anumg), &
              adecomp%gdc2glo(anumg), adecomp%glo2gdc(ani*anj), &
              adecomp%gdc2i  (anumg), adecomp%gdc2j  (anumg), &
              stat=ier)
@@ -1527,6 +1531,10 @@ contains
     adecomp%glo2gdc(:)  = 0
     adecomp%gdc2i(:)    = 0
     adecomp%gdc2j(:)    = 0
+
+!FG
+    adecomp%glo2owner(:) = -1
+
 
     !--- temporaries for decomp mappings
     allocate(aglo2gsn(ani*anj),stat=ier)
@@ -1558,12 +1566,17 @@ contains
              an = (aj-1)*ani + ai
              if (acid(an) == cid) then
                 ag = ag + 1
+
+!FG
+                adecomp%glo2owner(an) = pid
+
                 adecomp%gdc2i(ag) = ai
                 adecomp%gdc2j(ag) = aj
                 adecomp%gdc2gsn(ag) = aglo2gsn(an)
                 adecomp%gdc2glo(ag) = an
                 adecomp%gsn2gdc(aglo2gsn(an)) = ag
                 adecomp%glo2gdc(an) = ag
+
              endif
           enddo
           enddo
@@ -1976,6 +1989,9 @@ end subroutine decomp_domg2l
      get_proc_clumps = procinfo%nclumps
 
    end function get_proc_clumps
+
+
+
 
 !------------------------------------------------------------------------------
 !BOP
