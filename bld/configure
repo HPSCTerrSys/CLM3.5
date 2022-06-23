@@ -16,6 +16,7 @@
 # can resolve external references to the netCDF and MPI libraries.
 #
 # Date        Contributor         Modification
+# 02/12/2013  P. Shrestha         Added cps_catch SWITCH for high resolution simulation
 #-----------------------------------------------------------------------------------------------
 
 use strict;
@@ -65,6 +66,9 @@ OPTIONS
      -clm_exedir <dir>  Directory where CLM executable will be created.
      -cc <name>         User specified C compiler (linux only).  Overrides Makefile default.
      -ccsm              Building CLM from within CCSM scripts
+     -oas3_cos          Building with OASIS3 libraries and cosmo rcv and snd subroutines
+     -oas3_pfl          Building with OASIS3 libraries and parflow rcv and snd subroutines
+     -cps_catch         Building with explicit topographic index input in FMAX
      -cflags <string>   A string of user specified C compiler options.  Appended to
                         Makefile defaults.
      -cppdefs <string>  A string of user specified CPP defines.  Appended to
@@ -137,6 +141,10 @@ GetOptions(
     "cachedir=s"                => \$opts{'cachedir'},
     "cc=s"                      => \$opts{'cc'},
     "ccsm"                      => \$opts{'ccsm'},
+    "oas3"                      => \$opts{'oas3'},
+    "oas3_cos"                  => \$opts{'oas3_cos'},
+    "oas3_pfl"                  => \$opts{'oas3_pfl'},
+    "cps_catch=s"               => \$opts{'cps_catch'},
     "cflags=s"                  => \$opts{'cflags'},
     "clm_bld=s"                 => \$opts{'clm_bld'},
     "clm_exe=s"                 => \$opts{'clm_exe'},
@@ -252,6 +260,15 @@ if (defined $defaults && -s $defaults) {
 $cfg{'ccsm'} = (defined $opts{'ccsm'}) ? 1 : 0;
 my $clm_build = $cfg{'ccsm'} ? 0 : 1;
 
+# Building with oas3 libraries
+$cfg{'oas3'} = (defined $opts{'oas3'}) ? 1 : 0;
+my $oas3 = $cfg{'oas3'} ? 0 : 1;
+
+$cfg{'oas3_cos'} = (defined $opts{'oas3_cos'}) ? 1 : 0;
+my $oas3 = $cfg{'oas3_cos'} ? 0 : 1;
+
+$cfg{'oas3_pfl'} = (defined $opts{'oas3_pfl'}) ? 1 : 0;
+my $oas3 = $cfg{'oas3_pfl'} ? 0 : 1;
 #-----------------------------------------------------------------------------------------------
 # CLM root directory.  
 $cfg = absolute_path("$cfgdir/..");
@@ -411,6 +428,17 @@ if (defined $opts{'dust'}) {
 }
 $cfg{'dust'} = $cfg;
 if ($print>=2) { print "Using $cfg{'dust'} for dust.$eol"; }
+
+if (defined $opts{'cps_catch'}) {
+    $cfg = $opts{'cps_catch'};
+} elsif (defined $usr_defaults{'cps_catch'}) {
+    $cfg = $usr_defaults{'cps_catch'};
+} else {
+    $cfg = $bld_defaults{'cps_catch'};
+}
+$cfg{'cps_catch'} = $cfg;
+if ($print>=2) { print "Using $cfg{'cps_catch'} for cps_catch.$eol"; }
+
 
 if (defined $opts{'voc'}) {
     $cfg = $opts{'voc'};
@@ -634,7 +662,7 @@ elsif ( $cfg{target_os} eq 'irix'      or  $cfg{target_os} eq 'linux'   or
         $cfg{target_os} eq 'super-us'  or  $cfg{target_os} eq 'es'      or
         $cfg{target_os} eq 'unicosmp'  or  $cfg{target_os} eq 'solaris' or
         $cfg{target_os} eq 'dec_osf'   ) {
-    $cfg .= " -DFORTRANUNDERSCORE";
+        $cfg .= " -DFORTRANUNDERSCORE";
 }
 
 $cfg .= " -DMAXPATCH_PFT=$cfg{maxpft}";
@@ -643,6 +671,15 @@ if ($cfg{'ccsm'}) {
     $cfg .= " -DCOUP_CSM";
 } else {
     $cfg .= " -DOFFLINE";
+}
+if ($cfg{'oas3_cos'} || $cfg{'oas3_cos'}) {
+    $cfg .= " -DCOUP_OAS_COS";
+}
+if ($cfg{'oas3_pfl'} || $cfg{'oas3_pfl'}) {
+    $cfg .= " -DCOUP_OAS_PFL";
+}
+if ($cfg{'cps_catch'} eq 'on') {
+    $cfg .= " -DCATCHMENT";
 }
 if ($cfg{'progsslt'} eq 'on') { 
     $cfg .= " -DPROGSSLT";
@@ -723,7 +760,8 @@ if ($clm_build) {
     } else {
 	$cfg = '/usr/local/lib';
     }
-    if (-f "$cfg/libnetcdf.a") {
+#    if (-f "$cfg/libnetcdf.a") {
+    if (-f "$cfg/libnetcdff.a") {
 	$cfg{'nc_lib'} = $cfg;
     } else {
 	die <<"EOF";
@@ -1092,6 +1130,7 @@ supln    Turn on CN supplemental nitrogen (only applies to bgc setting of cn) [o
 progsslt Turn on PROGSSLT [on | off].
 rtm      Turn on RTM  [on | off].
 dust     Turn on DUST [on | off].
+cps_catch Turn on CATCHMENT [on | off].
 voc      Turn on VOC  [on | off].
 maxpft   Value of maxpatch_pft.
 </comment>
@@ -1101,6 +1140,7 @@ bgc="$cfg{'bgc'}"
 supln="$cfg{'supln'}"
 progsslt="$cfg{'progsslt'}"
 rtm="$cfg{'rtm'}"
+cps_catch="$cfg{'cps_catch'}"
 dust="$cfg{'dust'}"
 voc="$cfg{'voc'}"
 maxpft="$cfg{'maxpft'}"
@@ -1197,6 +1237,14 @@ sub write_filepath
     print $fh "$srcdir/biogeophys\n";
     print $fh "$srcdir/biogeochem\n";
     print $fh "$srcdir/riverroute\n";
+
+# OASIS coupler
+    if ($cfg{'oas3_cos'}) {
+    print $fh "$srcdir/oas3\n";
+    }
+    if ($cfg{'oas3_pfl'}) {
+    print $fh "$srcdir/oas3\n";
+    }
 
     $fh->close;
 }
@@ -1589,6 +1637,16 @@ sub validate_options {
 	    or die "** invalid value of $opt ($old) specified in $source\n".
                    "** expected one of: @expect\n";
     }
+
+    # cps_catch 
+    $opt = 'cps_catch';
+    @expect = ('on', 'off');
+    if (defined $opts->{$opt}) {
+        $old = $opts->{$opt};
+        $opts->{$opt} = valid_option($old, @expect)
+            or die "** invalid value of $opt ($old) specified in $source\n".
+                   "** expected one of: @expect\n";
+    }    
 
     # supln
     $opt = 'supln';

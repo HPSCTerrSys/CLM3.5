@@ -370,19 +370,20 @@ ifeq ($(FC),lf95)
 
 endif
 
-ifeq ($(findstring ifort,$(FC)),ifort)
+#ifort
+ifeq ($(findstring DUMMY,$(FC)),mpif90)
 
-  FFLAGS      := $(cpp_path) $(mod_path) $(CPPDEF) -132 -ftz -g
+  FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF) -132 -ftz -g
   FREEFLAGS   := -FR
   FIXEDFLAGS  :=
-  LDFLAGS     :=
+  LDFLAGS     := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
 
   ifeq ($(DEBUG),TRUE)
     FFLAGS    += -CB
   else
     # Check for override of default Fortran compiler optimizations
     ifeq ($(F_OPTIMIZATION_OVERRIDE),$(null))
-      FORTRAN_OPTIMIZATION := -O2
+      FORTRAN_OPTIMIZATION :=
     endif
     FFLAGS    += $(FORTRAN_OPTIMIZATION)
   endif
@@ -392,6 +393,61 @@ ifeq ($(findstring ifort,$(FC)),ifort)
     LDFLAGS   += -openmp
   endif
 
+endif
+
+#gfortran
+ifeq ($(findstring mpif90,$(FC)),mpif90)
+
+  FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF)
+  FFLAGS      += -fno-range-check
+  FREEFLAGS   := -ffree-form
+  FIXEDFLAGS  :=
+  LDFLAGS     := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
+
+  ifeq ($(DEBUG),TRUE)
+    FFLAGS    += -g -frecursive -fbounds-check
+  else
+    # Check for override of default Fortran compiler optimizations
+    ifeq ($(F_OPTIMIZATION_OVERRIDE),$(null))
+      FORTRAN_OPTIMIZATION :=
+    endif
+    FFLAGS    += $(FORTRAN_OPTIMIZATION)
+  endif
+
+  ifeq ($(SMP),TRUE)
+    FFLAGS    += -fopenmp
+    LDFLAGS   += -fopenmp
+  endif
+
+endif
+
+#CMS
+#xlf90
+ifeq ($(findstring mpixlf90,$(FC)),mpixlf90)
+
+  cpre = $(null)-WF,-D$(null)
+  FPPFLAGS   := $(patsubst -D%,$(cpre)%,$(CPPDEF))
+  FPPFLAGS   += $(patsubst -D%,$(cpre)%,$(CPPDEF1))
+ 
+  FFLAGS     := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(FPPFLAGS)
+  FREEFLAGS  := -qfree=f90 -qextname=flush
+  FIXEDFLAGS :=
+  LDFLAGS    := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
+
+  ifeq ($(DEBUG),TRUE)
+     FFLAGS    += -g -frecursive -fbounds-check
+   else
+    # Check for override of default Fortran compiler optimizations
+        ifeq ($(F_OPTIMIZATION_OVERRIDE),$(null))
+              FORTRAN_OPTIMIZATION :=
+        endif
+              FFLAGS    += $(FORTRAN_OPTIMIZATION)
+   endif
+#CPS flags added for
+        ifeq ($(SMP),TRUE)
+           FFLAGS  += -qsmp=omp
+           LDFLAGS += -qsmp=omp
+        endif
 endif
 
 # pathf90

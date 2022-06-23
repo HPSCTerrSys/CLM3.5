@@ -35,6 +35,7 @@ cpl     Is flux coupler used?  [ on | off ]
 bgc     BGC mode:  [ none | cn | casa | dgvm ]
 supln   Turn on CN supplemental nitrogen: [ on | off ]
 rtm     Turn on RTM : [on | off ]
+cps_cath Turn on CATCHMENT : [on | off ]
 voc     Turn on VOC : [on | off ]
 dust    Turn on DUST: [on | off ]
 </comment>
@@ -45,6 +46,7 @@ bgc="none"
 supln="off"
 voc="off"
 dust="off"
+cps_catch="off"
 rtm="off"
 maxpft="4"
 />
