@@ -370,55 +370,51 @@ ifeq ($(FC),lf95)
 
 endif
 
-#ifort
-ifeq ($(findstring DUMMY,$(FC)),mpif90)
-
-  FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF) -132 -ftz -g
-  FREEFLAGS   := -FR
-  FIXEDFLAGS  :=
-  LDFLAGS     := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
-
-  ifeq ($(DEBUG),TRUE)
-    FFLAGS    += -CB
-  else
-    # Check for override of default Fortran compiler optimizations
-    ifeq ($(F_OPTIMIZATION_OVERRIDE),$(null))
-      FORTRAN_OPTIMIZATION :=
-    endif
-    FFLAGS    += $(FORTRAN_OPTIMIZATION)
-  endif
-
-  ifeq ($(SMP),TRUE)
-    FFLAGS    += -openmp
-    LDFLAGS   += -openmp
-  endif
-
-endif
-
-#gfortran
 ifeq ($(findstring mpif90,$(FC)),mpif90)
+  ifeq ($(findstring ifort,$(shell $(FC) --version)),ifort)
+    #ifort
+    FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF) -132 -ftz -g
+    FREEFLAGS   := -free
+    FIXEDFLAGS  :=
+    LDFLAGS     := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
 
-  FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF)
-  FFLAGS      += -fno-range-check
-  FREEFLAGS   := -ffree-form
-  FIXEDFLAGS  :=
-  LDFLAGS     := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
-
-  ifeq ($(DEBUG),TRUE)
-    FFLAGS    += -g -frecursive -fbounds-check
-  else
-    # Check for override of default Fortran compiler optimizations
-    ifeq ($(F_OPTIMIZATION_OVERRIDE),$(null))
-      FORTRAN_OPTIMIZATION :=
+    ifeq ($(DEBUG),TRUE)
+      FFLAGS    += -g
+    else
+      # Check for override of default Fortran compiler optimizations
+      ifeq ($(F_OPTIMIZATION_OVERRIDE),$(null))
+        FORTRAN_OPTIMIZATION := -O2 -xHost
+      endif
+      FFLAGS    += $(FORTRAN_OPTIMIZATION)
     endif
-    FFLAGS    += $(FORTRAN_OPTIMIZATION)
-  endif
 
-  ifeq ($(SMP),TRUE)
-    FFLAGS    += -fopenmp
-    LDFLAGS   += -fopenmp
-  endif
+    ifeq ($(SMP),TRUE)
+      FFLAGS    += -qopenmp
+      LDFLAGS   += -qopenmp
+    endif
+  else
+    #gfortran
+    FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF)
+    FFLAGS      += -fno-range-check
+    FREEFLAGS   := -ffree-form
+    FIXEDFLAGS  :=
+    LDFLAGS     := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
 
+    ifeq ($(DEBUG),TRUE)
+      FFLAGS    += -g -frecursive -fbounds-check
+    else
+      # Check for override of default Fortran compiler optimizations
+      ifeq ($(F_OPTIMIZATION_OVERRIDE),$(null))
+        FORTRAN_OPTIMIZATION := -O2
+      endif
+      FFLAGS    += $(FORTRAN_OPTIMIZATION)
+    endif
+
+    ifeq ($(SMP),TRUE)
+      FFLAGS    += -fopenmp
+      LDFLAGS   += -fopenmp
+    endif
+  endif
 endif
 
 #CMS
