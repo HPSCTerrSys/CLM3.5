@@ -76,13 +76,15 @@ INTEGER, ALLOCATABLE :: igparal(:)                    ! shape of arrays passed t
 INTEGER              :: NULOUT=6
 
 INTEGER              :: ji, jj, jg, jgm1              ! local loop indicees
-INTEGER ,ALLOCATABLE :: oas_mask(:)
+INTEGER ,ALLOCATABLE :: oas_mask(:,:)
 
 CHARACTER(len=4)     :: clgrd='gclm'                  ! CPS
 
 REAL(KIND=r8)        :: dx
-REAL(KIND=r8), ALLOCATABLE :: zclo(:,:), zcla(:,:), tmp_2D(:,:)
+REAL(KIND=r8), ALLOCATABLE :: zclo(:,:), zcla(:,:)
 REAL(KIND=r8), ALLOCATABLE :: zlon(:), zlat(:)
+REAL(KIND=r8), ALLOCATABLE :: oas_lon(:,:), oas_lat(:,:)
+REAL(KIND=r8), ALLOCATABLE :: oas_corner_lon(:,:,:), oas_corner_lat(:,:,:)
 INTEGER                    :: write_aux_files
 
 Integer :: c_comm
@@ -145,13 +147,28 @@ integer :: ai, aj ,ani , anj , an , owner, last_owner
      CALL prism_abort_proto( ncomp_id, 'oas_clm_define', 'Failure in allocating zlat' )
      RETURN
    ENDIF
-   ALLOCATE( tmp_2D(ndlon*ndlat,8), stat = nerror )
+   ALLOCATE( oas_lon(ndlon*ndlat,1), stat = nerror )
    IF ( nerror > 0 ) THEN
-     CALL prism_abort_proto( ncomp_id, 'oas_clm_define', 'Failure in allocating tmp_2D' )
+     CALL prism_abort_proto( ncomp_id, 'oas_clm_define', 'Failure in allocating oas_lon' )
+     RETURN
+   ENDIF
+   ALLOCATE( oas_lat(ndlon*ndlat,1), stat = nerror )
+   IF ( nerror > 0 ) THEN
+     CALL prism_abort_proto( ncomp_id, 'oas_clm_define', 'Failure in allocating oas_lat' )
+     RETURN
+   ENDIF
+   ALLOCATE( oas_corner_lon(ndlon*ndlat,1, 1:4), stat = nerror )
+   IF ( nerror > 0 ) THEN
+     CALL prism_abort_proto( ncomp_id, 'oas_clm_define', 'Failure in allocating oas_corner_lon' )
+     RETURN
+   ENDIF
+   ALLOCATE( oas_corner_lat(ndlon*ndlat,1, 5:8), stat = nerror )
+   IF ( nerror > 0 ) THEN
+     CALL prism_abort_proto( ncomp_id, 'oas_clm_define', 'Failure in allocating oas_corner_lat' )
      RETURN
    ENDIF
 
-   ALLOCATE(oas_mask(ndlon*ndlat))
+   ALLOCATE(oas_mask(ndlon*ndlat, 1))
    IF ( nerror > 0 ) THEN
       CALL prism_abort_proto( ncomp_id, 'oas_clm_define', 'Failure in allocating oas_mask' )
       RETURN
@@ -227,9 +244,9 @@ integer :: ai, aj ,ani , anj , an , owner, last_owner
    DO ji = 1, ndlon
      jg    = (jj-1)*ndlon + ji
      IF ( amask(jg) == 1 ) THEN
-        oas_mask(jg) = 0
+        oas_mask(jg,1) = 0
      ELSE
-        oas_mask(jg) = 1
+        oas_mask(jg,1) = 1
      ENDIF
    ENDDO
    ENDDO
@@ -244,39 +261,33 @@ integer :: ai, aj ,ani , anj , an , owner, last_owner
  
     DO jj = 1, ndlat
     DO ji = 1, ndlon
-       tmp_2D(ji+(jj-1)*ndlon,1) = zlon(ji)
-       tmp_2D(ji+(jj-1)*ndlon,2) = zlat(jj)
+       oas_lon(ji+(jj-1)*ndlon,1) = zlon(ji)
+       oas_lat(ji+(jj-1)*ndlon,2) = zlat(jj)
     ENDDO
     ENDDO
 
-   CALL prism_write_grid (clgrd, ndlon*ndlat, 1, tmp_2D(:,1), tmp_2D(:,2))
+   CALL prism_write_grid (clgrd, ndlon*ndlat, 1, oas_lon, oas_lat)
 
     DO jj = 1, ndlat
     DO ji = 1, ndlon
-     tmp_2D(ji+(jj-1)*ndlon,1) = zclo(ji,1)
-     tmp_2D(ji+(jj-1)*ndlon,2) = zclo(ji,2)
-     tmp_2D(ji+(jj-1)*ndlon,5) = zcla(jj,1)
-     tmp_2D(ji+(jj-1)*ndlon,7) = zcla(jj,2)
+     oas_corner_lon(ji+(jj-1)*ndlon,1,1) = zclo(ji,1)
+     oas_corner_lon(ji+(jj-1)*ndlon,1,2) = zclo(ji,2)
+     oas_corner_lat(ji+(jj-1)*ndlon,1,5) = zcla(jj,1)
+     oas_corner_lat(ji+(jj-1)*ndlon,1,7) = zcla(jj,2)
     ENDDO
     ENDDO
 
     ! Fill missing corners for longitude
-    tmp_2D(:,3) = tmp_2D(:,2)
-    tmp_2D(:,4) = tmp_2D(:,1)
+    oas_corner_lon(:,1,3) = oas_corner_lon(:,1,2)
+    oas_corner_lon(:,1,4) = oas_corner_lon(:,1,1)
 
     ! Fill missing corners for latitude
-    tmp_2D(:,6) = tmp_2D(:,5)
-    tmp_2D(:,8) = tmp_2D(:,7)
+    oas_corner_lat(:,1,6) = oas_corner_lat(:,1,5)
+    oas_corner_lat(:,1,8) = oas_corner_lat(:,1,7)
 
-    CALL prism_write_corner (clgrd, ndlon*ndlat, 1, 4, tmp_2D(:,1:4), tmp_2D(:,5:8))
-
-    ! tbd CALL prism_write_angle (clgrd, ndlon*ndlat, 1, angle)
+    CALL prism_write_corner (clgrd, ndlon*ndlat, 1, 4, oas_corner_lon, oas_corner_lat)
 
     CALL prism_write_mask (clgrd, ndlon*ndlat, 1, oas_mask)
-
-    ! EM tbd Fill areas with true values
-    tmp_2D(:,1) = 1 
-!CPS        CALL prism_write_area (clgrd, ndlon*ndlat, 1, tmp_2D(:,1))
 
     CALL prism_terminate_grids_writing()
         
@@ -284,7 +295,8 @@ integer :: ai, aj ,ani , anj , an , owner, last_owner
 
   WRITE(nulout,*) ' oasclm: oas_clm_define: prism_terminate_grids'
   CALL flush(nulout)
-  DEALLOCATE(tmp_2D, oas_mask, zclo, zcla, zlon, zlat)
+  DEALLOCATE(oas_mask, zclo, zcla, zlon, zlat)
+  DEALLOCATE(oas_lon, oas_lat, oas_corner_lon, oas_corner_lat)
  ENDIF                       ! masterproc
 #endif
 
