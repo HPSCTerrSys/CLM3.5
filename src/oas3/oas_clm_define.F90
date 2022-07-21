@@ -262,7 +262,7 @@ integer :: ai, aj ,ani , anj , an , owner, last_owner
     DO jj = 1, ndlat
     DO ji = 1, ndlon
        oas_lon(ji+(jj-1)*ndlon,1) = zlon(ji)
-       oas_lat(ji+(jj-1)*ndlon,2) = zlat(jj)
+       oas_lat(ji+(jj-1)*ndlon,1) = zlat(jj)
     ENDDO
     ENDDO
 
