@@ -2331,6 +2331,11 @@ contains
     allocate(cps%farea_burned(beg:end))
     allocate(cps%ann_farea_burned(beg:end))
 
+    !kuw: texture varibles
+    allocate(cps%psand(beg:end,nlevsoi))
+    allocate(cps%pclay(beg:end,nlevsoi))
+    !kuw end
+
     cps%isoicol(beg:end) = bigint
     cps%bsw(beg:end,1:nlevsoi) = nan
     cps%watsat(beg:end,1:nlevsoi) = nan
@@ -2389,6 +2394,11 @@ contains
     cps%fireseasonl(beg:end) = nan
     cps%farea_burned(beg:end) = nan
     cps%ann_farea_burned(beg:end) = nan
+
+    !kuw: texture variables
+    cps%psand(beg:end,1:nlevsoi) = nan
+    cps%pclay(beg:end,1:nlevsoi) = nan
+    !kuw end
 
   end subroutine init_column_pstate_type
 
