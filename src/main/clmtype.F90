@@ -944,6 +944,10 @@ type, public :: column_pstate_type
    real(r8), pointer :: fireseasonl(:)      !annual fire season length (days, <= 365) 
    real(r8), pointer :: farea_burned(:)     !timestep fractional area burned (proportion) 
    real(r8), pointer :: ann_farea_burned(:) !annual total fractional area burned (proportion)
+   !kuw: add variables for texture
+   real(r8), pointer :: psand(:,:)  ! percentage sand
+   real(r8), pointer :: pclay(:,:)  ! percentage clay
+   !kuw end
 end type column_pstate_type
 
 !----------------------------------------------------
