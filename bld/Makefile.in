@@ -82,7 +82,9 @@ VPATH    := $(subst $(space),:,$(VPATH))
 #------------------------------------------------------------------------
 # Primary target: build the model
 #------------------------------------------------------------------------
-all: $(MODEL_EXEDIR)/$(EXENAME)
+default: $(MODEL_EXEDIR)/$(EXENAME)
+
+all: $(MODEL_EXEDIR)/$(EXENAME) $(MODEL_LIBDIR)/lib$(EXENAME).a header-files
 
 # Get list of files and build dependency file for all .o files
 #   using perl scripts mkSrcfiles and mkDepends
@@ -108,6 +110,12 @@ endif
 $(MODEL_EXEDIR)/$(EXENAME): $(OBJS)
 	$(LINKER) -o $@ $(OBJS) -L$(LIB_NETCDF) -lnetcdf $(LDFLAGS)
 
+$(MODEL_LIBDIR)/lib$(EXENAME).a:	$(OBJS)
+	$(RM) $@
+	ar rs $@ $(OBJS)
+
+header-files:	$(OBJS)
+	cp -t $(MODEL_INCDIR) $(OBJS)
 
 # Compilation rules:
 .SUFFIXES:

@@ -64,6 +64,8 @@ OPTIONS
                         output files it generates (Makefile, Filepath, etc...)
      -clm_exe <name>    Name of the CLM executable.
      -clm_exedir <dir>  Directory where CLM executable will be created.
+     -clm_libdir <dir>  Directory where libCLM.a will be created.
+     -clm_incdir <dir>  Directory where CLM header files (*.o) will be copied to.
      -cc <name>         User specified C compiler (linux only).  Overrides Makefile default.
      -ccsm              Building CLM from within CCSM scripts
      -oas3_cos          Building with OASIS3 libraries and cosmo rcv and snd subroutines
@@ -130,6 +132,8 @@ my %opts = (
 	    clm_bld     => undef,
 	    clm_exe     => undef,
 	    clm_exedir  => undef,
+        clm_libdir  => undef,
+        clm_incdir  => undef,
 	    fopt        => undef,
 	    smp         => undef,
 	    test        => 0,
@@ -149,6 +153,8 @@ GetOptions(
     "clm_bld=s"                 => \$opts{'clm_bld'},
     "clm_exe=s"                 => \$opts{'clm_exe'},
     "clm_exedir=s"              => \$opts{'clm_exedir'},
+    "clm_libdir=s"              => \$opts{'clm_libdir'},
+    "clm_incdir=s"              => \$opts{'clm_incdir'},
     "cppdefs=s"                 => \$opts{'cppdefs'},
     "debug"                     => \$opts{'debug'},
     "defaults=s"                => \$defaults,
@@ -308,7 +314,7 @@ EOF
 if ($print>=2) { print "Setting CLM build directory to $cfg{'clm_bld'}$eol"; }
 
 #-----------------------------------------------------------------------------------------------
-# CLM install directory.
+# CLM install directories.
 
 $cfg{'clm_exedir'} = '';
 
@@ -329,8 +335,40 @@ if ($clm_build) {
 EOF
     }
     if ($print>=2) { print "The CLM executable will be created in $cfg{'clm_exedir'}$eol"; }
-
 }
+
+#-----------------------------------------------------------------------------------------------
+# CLM lib and include directories (optional)
+
+$cfg{'clm_libdir'} = '';
+$cfg{'clm_incdir'} = '';
+
+if ($clm_build) {
+    if (defined $opts{'clm_libdir'}) {
+        $cfg = $opts{'clm_libdir'};
+        if (-d $cfg or mkdirp($cfg)) {
+	        $cfg{'clm_libdir'} = absolute_path($cfg);
+        } else {
+	    die <<"EOF";
+** Could not create the specified CLM lib directory: $cfg
+EOF
+        }
+        if ($print>=2) { print "CLM static library will be created in $cfg{'clm_libdir'}$eol"; }
+    }
+
+    if (defined $opts{'clm_incdir'}) {
+        $cfg = $opts{'clm_incdir'};
+        if (-d $cfg or mkdirp($cfg)) {
+	        $cfg{'clm_incdir'} = absolute_path($cfg);
+        } else {
+	    die <<"EOF";
+** Could not create the specified CLM include directory: $cfg
+EOF
+        }
+        if ($print>=2) { print "CLM header files will be copied to $cfg{'clm_incdir'}$eol"; }
+    }
+}
+
 #-----------------------------------------------------------------------------------------------
 # User source directories.
 if (defined $usr_src) {
@@ -1365,6 +1403,8 @@ UNAMES       := $uname_map{$cfg{'target_os'}}
 ROOTDIR      := $cfg{'clm_root'}
 EXENAME      := $cfg{'clm_exe'}
 MODEL_EXEDIR := $cfg{'clm_exedir'}
+MODEL_LIBDIR := $cfg{'clm_libdir'}
+MODEL_INCDIR := $cfg{'clm_incdir'}
 INC_NETCDF   := $cfg{'nc_inc'}
 LIB_NETCDF   := $cfg{'nc_lib'}
 MOD_NETCDF   := $cfg{'nc_mod'}
