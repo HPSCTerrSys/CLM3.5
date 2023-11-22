@@ -115,7 +115,7 @@ $(MODEL_LIBDIR)/lib$(EXENAME).a:	$(OBJS)
 	ar rs $@ $(OBJS)
 
 header-files:	$(OBJS)
-	cp -t $(MODEL_INCDIR) $(OBJS)
+	cp -t $(MODEL_INCDIR) *.h *.mod
 
 # Compilation rules:
 .SUFFIXES:
