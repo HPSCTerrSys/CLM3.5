@@ -179,9 +179,9 @@ int GPTLinitialize (void)
 
   for (t = 0; t < maxthreads; t++) {
     timers[t] = NULL;
-    current_depth[t].depth = NULL;
-    max_depth[t]     = NULL;
-    max_name_len[t]  = NULL;
+    current_depth[t].depth = 0;
+    max_depth[t]     = 0;
+    max_name_len[t]  = 0;
     hashtable[t] = (Hashentry *) GPTLallocate (tablesize * sizeof (Hashentry));
 #ifdef DIAG
     novfl[t] = NULL;
