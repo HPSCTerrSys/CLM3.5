@@ -403,7 +403,7 @@ ifeq ($(findstring mpif90,$(FC)),mpif90)
   else
     #gfortran
     FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF)
-    FFLAGS      += -fno-range-check
+    FFLAGS      += -fno-range-check -fallow-argument-mismatch -fallow-invalid-boz
     FREEFLAGS   := -ffree-form
     FIXEDFLAGS  :=
     LDFLAGS     := $(LIBNETCDF_FLAG) $(LIBOASIS) $(LIBPSMILE)
