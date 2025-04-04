@@ -378,7 +378,15 @@ ifeq ($(FC),lf95)
 
 endif
 
+MPI_FC := FALSE
 ifeq ($(findstring mpif90,$(FC)),mpif90)
+  MPI_FC := TRUE
+endif
+ifeq ($(findstring mpifort,$(FC)),mpifort)
+  MPI_FC := TRUE
+endif
+
+ifeq ($(MPI_FC),TRUE)
   ifeq ($(findstring ifort,$(shell $(FC) --version)),ifort)
     #ifort
     FFLAGS      := $(cpp_path) $(mod_path) $(PSMILE_INCDIR) $(CPPDEF1) $(CPPDEF) -132 -ftz -g
